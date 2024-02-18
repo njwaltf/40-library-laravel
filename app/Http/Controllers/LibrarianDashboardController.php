@@ -8,6 +8,8 @@ class LibrarianDashboardController extends Controller
 {
     public function index()
     {
-        return view('dashboard.librarian.librarian-dashboard');
+        return view('dashboard.librarian.librarian-dashboard', [
+            'title' => 'Dashboard'
+        ]);
     }
 }

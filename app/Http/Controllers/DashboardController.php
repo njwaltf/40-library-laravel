@@ -8,6 +8,8 @@ class DashboardController extends Controller
 {
     public function index()
     {
-        return view('dashboard.member.member-dashboard');
+        return view('dashboard.member.member-dashboard', [
+            'title' => 'Dashboard'
+        ]);
     }
 }

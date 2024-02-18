@@ -12,15 +12,6 @@ class LoginController extends Controller
     {
         return view('login');
     }
-
-    // public function auth(Request $request)
-    // {
-    //     $validator = $request->validate([
-    //         'username' => ['required'],
-    //         'password' => ['required']
-    //     ]);
-    //     return redirect('/')->withErrors($validator);
-    // }
     public function auth(Request $request)
     {
         $credentials = $request->validate([

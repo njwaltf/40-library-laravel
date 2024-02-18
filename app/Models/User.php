@@ -26,6 +26,23 @@ class User extends Authenticatable
         'id'
     ];
 
+    public function scopeSearch($query, $keyword)
+    {
+        return $query->when($keyword, function ($query, $keyword) {
+            $query->where(function ($query) use ($keyword) {
+                $query->where('name', 'like', "%$keyword%")
+                    ->orWhere('username', 'like', "%$keyword%")
+                    ->orWhere('email', 'like', "%$keyword%")
+                    ->orWhere('role', 'like', "%$keyword%");
+            });
+        });
+    }
+    public function scopeFilterByRole($query, $role)
+    {
+        return $query->when($role, function ($query, $role) {
+            $query->where('role', $role);
+        });
+    }
     /**
      * The attributes that should be hidden for serialization.
      *
