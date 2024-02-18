@@ -36,11 +36,13 @@ Route::get('/home', function () {
 // error route
 Route::get('/you-dont-have-access', [DontHaveAccess::class, 'index'])->name('you-dont-have-access');
 
+Route::resource('/bookings-management', BookingController::class);
+
 // auth route
 Route::middleware(['auth'])->group(function () {
     Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
     // admin route
-    Route::get('/dashboard-admin', [AdminDashboardController::class, 'index'])->middleware('userAccess:admin');
+    // Route::get('/dashboard-admin', [AdminDashboardController::class, 'index'])->middleware('userAccess:admin');
     // user model
     Route::get('/users-management', [UserController::class, 'index'])->middleware('userAccess:admin')->name('users-management');
     Route::get('/users-management/{id}', [UserController::class, 'show'])->middleware('userAccess:admin');
@@ -51,8 +53,10 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/users-management-edit', [UserController::class, 'update'])->middleware('userAccess:admin');
     // book model
     Route::resource('/books-management', BookController::class)->middleware('userAccess:admin');
-    Route::resource('/categories-management', CategoryController::class);
-    Route::resource('/bookings-management', BookingController::class);
+    Route::resource('/categories-management', CategoryController::class)->middleware('userAccess:admin');
+    Route::resource('/bookings-management', BookingController::class)->middleware(['userAccess:librarian', 'userAccess:admin']);
+    // Route::resource('/bookings-management', BookingController::class)->middleware(['userAccess:admin', 'userAccess:librarian']);
+    // export
     Route::get('/pdf/export-booking/', [BookingController::class, 'exportBookingPDF']);
     Route::get('/qr/export-booking/{id}', [BookingController::class, 'exportPDF']);
     Route::get('/export/invoice/{id}', [BookingController::class, 'generateInvoice']);

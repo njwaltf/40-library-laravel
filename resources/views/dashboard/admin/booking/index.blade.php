@@ -107,7 +107,7 @@
                                                     @csrf
                                                     @method('delete')
                                                     <button class="btn btn-danger m-1" type="submit"
-                                                        onclick="return confirm('Apakah kamu yakin ingin menghapus peminjaman ini?')">Batalkan
+                                                        onclick="return confirm('Apakah kamu yakin ingin membatalkan peminjaman ini?')">Batalkan
                                                         <i class="fas fa-trash-alt"></i></button>
                                                 </form>
                                             </td>

@@ -87,6 +87,21 @@
                         <i class="fas fa-grip-horizontal"></i>
                         <span>Dashboard</span>
                     </a></li>
+                <li class="dropdown @if (request()->segment(1) === 'bookings-management') active @endif">
+                    <a href="#" class="nav-link has-dropdown" data-toggle="dropdown"><i
+                            class="fas fa-address-book"></i>
+                        <span>Peminjaman Buku</span></a>
+                    <ul class="dropdown-menu">
+                        <li><a class="nav-link" href="/bookings-management"
+                                @if (request()->segment(1) === 'bookings-management' && request()->segment(2) != 'create') style="color: #6777ef;" @endif>Kelola
+                                Peminjaman</a>
+                        </li>
+                        <li><a class="nav-link" href="/bookings-management/create"
+                                @if (request()->segment(1) === 'bookings-management' && request()->segment(2) === 'create') style="color: #6777ef;" @endif>Tambah
+                                Peminjaman</a>
+                        </li>
+                    </ul>
+                </li>
             @endif
             {{-- end of librarian --}}
             {{-- <li class="dropdown active">

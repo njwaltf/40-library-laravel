@@ -6,9 +6,10 @@ use App\Http\Requests\StoreBookingRequest;
 use App\Http\Requests\UpdateBookingRequest;
 use App\Models\Book;
 use App\Models\Booking;
-use Carbon\Carbon;
+use App\Models\Forfeit;
 use App\Models\User;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 
@@ -64,7 +65,7 @@ class BookingController extends Controller
             'book_id' => ['required', 'exists:books,id'],
             'user_id' => ['required', 'exists:users,id'],
             'book_at' => ['required', 'date'],
-            'status' => ['required', 'in:Dipinjam,Dikembalikan,Dikembalikan Terlambat'],
+            'status' => ['required', 'in:Dipinjam,Dikembalikan,Dikembalikan Terlambat,Ditolak'],
         ], [
             'book_id.required' => 'Judul buku harus dipilih.',
             'book_id.exists' => 'Judul buku tidak valid.',
@@ -113,17 +114,88 @@ class BookingController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(UpdateBookingRequest $request, Booking $booking)
+    public function update(UpdateBookingRequest $request, Booking $bookings_management)
     {
-        //
+        $validatedData = $request->validate([
+            'book_id' => ['required', 'exists:books,id'],
+            'user_id' => ['required', 'exists:users,id'],
+            'book_at' => ['required', 'date'],
+            'status' => ['required', 'in:Dipinjam,Dikembalikan,Dikembalikan Terlambat,Ditolak'],
+            'return_date' => ['nullable']
+        ], [
+            'book_id.required' => 'Judul buku harus dipilih.',
+            'book_id.exists' => 'Judul buku tidak valid.',
+            'user_id.required' => 'Nama peminjam harus dipilih.',
+            'user_id.exists' => 'Nama peminjam tidak valid.',
+            'book_at.required' => 'Tanggal peminjaman harus diisi.',
+            'book_at.date' => 'Tanggal peminjaman harus berupa tanggal.',
+            'status.required' => 'Status peminjaman harus dipilih.',
+            'status.in' => 'Status peminjaman tidak valid.',
+        ]);
+
+        if ($validatedData['status'] === 'Dipinjam') {
+            // stock update
+            Book::where('id', $bookings_management->book_id)->update([
+                'stock' => $bookings_management->book->stock - 1
+            ]);
+            // create expired date
+            $validatedData['expired_date'] = Carbon::now()->addDays(7);
+            // notif
+            $data['desc'] = 'Buku berhasil kamu pinjam';
+
+        } elseif ($validatedData['status'] === 'Dikembalikan') {
+            // Book stock update
+            Book::where('id', $bookings_management->book_id)->update([
+                'stock' => $bookings_management->book->stock + 1
+            ]);
+            // get today date
+            $validatedData['return_date'] = Carbon::now();
+
+            // check if the return_date is greater than the expired date if true denda == 1
+            if ($validatedData['return_date']->gt($bookings_management->expired_date)) {
+                // create forfeit
+                // $forfeitData = [
+                //     'book_id' => $bookings_management->book->id,
+                //     'user_id' => $bookings_management->user->id,
+                //     'booking_id' => $bookings_management->id,
+                //     'cost' => 50000,
+                //     'status' => 'Belum Dibayar',
+                // ];
+                // Forfeit::create($forfeitData);
+                $validatedData['isDenda'] = 1;
+                // $data['desc'] = 'Buku dikembalikan terlambat denda wkwk';
+
+            } else {
+                $validatedData['isDenda'] = 0;
+                // $data['desc'] = 'Buku telah dikembalikan tepat waktu';
+            }
+
+        } elseif ($validatedData['status'] === 'Ditolak') {
+            // $data['desc'] = 'Gaboleh minjem lu awokawok 😂';
+
+        } elseif ($validatedData['status'] === 'Dikembalikan Terlambat') {
+            $validatedData['isDenda'] = 1;
+            // $data['desc'] = 'Gaboleh minjem lu awokawok 😂';
+        }
+
+
+        // denda
+        if ($validatedData['status'] === 'Dikembalikan Terlambat') {
+            Booking::where('id', $bookings_management->id)->update([
+                'isDenda' => 1
+            ]);
+        }
+        $bookings_management = Booking::where('id', $bookings_management->id)->update($validatedData);
+        return redirect('/bookings-management')->with('successEdit', 'Peminjaman berhasil diperbarui!');
     }
 
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Booking $booking)
+    public function destroy(Booking $bookings_management)
     {
-        //
+        Book::destroy($bookings_management->id);
+        return redirect('/bookings-management')->with('successDelete', 'Peminjaman berhasil dihapus!');
     }
     public function exportBookingPDF()
     {
